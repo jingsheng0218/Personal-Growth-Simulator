@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>成长升级模拟器</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        .progress-container { width: 50%; margin: 10px auto; }
+        .progress-bar { height: 20px; background-color: green; width: 0%; transition: width 0.5s; }
+        button, input { margin: 10px; padding: 10px; }
+        #timeline { text-align: left; margin: 20px auto; width: 60%; border: 1px solid #ddd; padding: 10px; max-height: 200px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <h1>成长升级模拟器</h1>
+    
+    <h2>学业等级: <span id="studyLevel">1</span></h2>
+    <h3>学业Exp: <span id="studyExp">0</span> / <span id="studyExpMax">100</span></h3>
+    <h3>学业值: <span id="study">0</span></h3>
+    <div class="progress-container">
+        <div class="progress-bar" id="study-bar"></div>
+    </div>
+    <button onclick="increaseValue('study', 10)">KIE1003 Electronic Physics +10 Exp</button>
+    <button onclick="increaseValue('study', 10)">KIE1007 Electronic Circuits I +10 Exp</button>
+    <button onclick="increaseValue('study', 10)">KIE2006 Signals and Systems +10 Exp</button>
+    <button onclick="increaseValue('study', 10)">Programming +10 Exp</button>
+    <button onclick="increaseValue('study', 10)">Engineering Maths +10 Exp</button>
+    <button onclick="increaseValue('study', 20)">Self-Study +20 Exp</button>
+    <button onclick="increaseValue('study', 20)">Research +20 Exp</button>
+    
+    <h3>Net Worth (MYR): <span id="totalWealthMYR">0</span> MYR</h3>
+    <label>Currency (USD/MYR): <input type="number" id="exchangeRate" value="4.5" step="0.01" oninput="updateWealth()"></label>
+    <br>
+    <label>Cash (马币): <input type="number" id="cashMYR" oninput="updateWealth()"></label>
+    <label>Stock (马币): <input type="number" id="stocksMYR" oninput="updateWealth()"></label>
+    <label>E-wallet (马币): <input type="number" id="ewalletMYR" oninput="updateWealth()"></label>
+    <label>Fixed Deposit (马币): <input type="number" id="fixedDepositMYR" oninput="updateWealth()"></label>
+    <br>
+    <label>Cash (美元): <input type="number" id="cashUSD" oninput="updateWealth()"></label>
+    <label>Stock (美元): <input type="number" id="stocksUSD" oninput="updateWealth()"></label>
+    
+    <h2>健康等级: <span id="healthLevel">1</span></h2>
+    <h3>健康Exp: <span id="healthExp">0</span> / <span id="healthExpMax">100</span></h3>
+    <h3>健康值: <span id="health">0</span></h3>
+    <div class="progress-container">
+        <div class="progress-bar" id="health-bar"></div>
+    </div>
+    <button onclick="increaseValue('health', 8)">健身 +8 Exp</button>
+    <button onclick="increaseValue('health', 10)">篮球 +10 Exp</button>
+    <button onclick="increaseValue('health', 9)">羽球 +9 Exp</button>
+    <button onclick="increaseValue('health', 12)">有氧 +12 Exp</button>
+    
+    <h2>时间轴</h2>
+    <div id="timeline"></div>
+    
+    <script>
+        let stats = JSON.parse(localStorage.getItem("stats")) || {
+            health: { level: 1, exp: 0, expMax: 100, value: 0 },
+            study: { level: 1, exp: 0, expMax: 100, value: 0 }
+        };
+        
+        let timelineData = JSON.parse(localStorage.getItem("timeline")) || [];
+        
+        function increaseValue(category, amount) {
+            if (!stats[category]) return;
+            stats[category].value += amount;
+            stats[category].exp += amount;
+            
+            while (stats[category].exp >= stats[category].expMax) {
+                stats[category].exp -= stats[category].expMax;
+                stats[category].level++;
+                stats[category].expMax += 50;
+                logEvent(`${category === 'study' ? '学业' : '健康'} 等级提升! 现在等级: ${stats[category].level}`, true);
+            }
+            
+            updateDisplay();
+            saveData();
+        }
+        
+        function logEvent(message, isLevelUp = false) {
+            let timestamp = new Date().toLocaleString();
+            let entry = `${timestamp} - ${message}`;
+            timelineData.unshift(entry);
+            localStorage.setItem("timeline", JSON.stringify(timelineData));
+            renderTimeline();
+        }
+        
+        function renderTimeline() {
+            let timeline = document.getElementById("timeline");
+            timeline.innerHTML = "";
+            timelineData.forEach(entry => {
+                let div = document.createElement("div");
+                div.textContent = entry;
+                timeline.appendChild(div);
+            });
+        }
+        
+        function updateDisplay() {
+            ["health", "study"].forEach(type => {
+                document.getElementById(type + "Level").textContent = stats[type].level;
+                document.getElementById(type + "Exp").textContent = stats[type].exp;
+                document.getElementById(type + "ExpMax").textContent = stats[type].expMax;
+                document.getElementById(type).textContent = stats[type].value;
+                document.getElementById(type + "-bar").style.width = Math.min((stats[type].exp / stats[type].expMax) * 100, 100) + "%";
+            });
+        }
+        
+        function saveData() {
+            localStorage.setItem("stats", JSON.stringify(stats));
+        }
+        
+        window.onload = function() {
+            updateDisplay();
+            renderTimeline();
+        };
+    </script>
+</body>
+</html>
+
